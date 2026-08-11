@@ -8,6 +8,46 @@
 using AddTwoInt = example_msgs::srv::AddTwoInt;
 using namespace std::chrono_literals;
 
+class AddTwoIntsClient : public rclcpp::Node
+{
+public:
+  AddTwoIntsClient() : Node("add_two_ints_client")
+  {
+    client_ = create_client<AddTwoInt>("add_two_ints");
+  }
+
+  bool send_request(int64_t a, int64_t b)
+  {
+    while (!client_->wait_for_service(1s)) {
+      if (!rclcpp::ok()) {
+        RCLCPP_ERROR(get_logger(), "Interrupted while waiting for the service");
+        return false;
+      }
+
+      RCLCPP_INFO(get_logger(), "Waiting for service...");
+    }
+
+    auto request = std::make_shared<AddTwoInt::Request>();
+    request->a = a;
+    request->b = b;
+
+    auto future = client_->async_send_request(request);
+
+    if (rclcpp::spin_until_future_complete(shared_from_this(), future) !=
+      rclcpp::FutureReturnCode::SUCCESS)
+    {
+      RCLCPP_ERROR(get_logger(), "Service call failed");
+      return false;
+    }
+
+    RCLCPP_INFO(get_logger(), "Result: %ld", future.get()->c);
+    return true;
+  }
+
+private:
+  rclcpp::Client<AddTwoInt>::SharedPtr client_;
+};
+
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
@@ -20,35 +60,9 @@ int main(int argc, char * argv[])
     return 1;
   }
 
-  auto node = rclcpp::Node::make_shared("add_two_ints_client");
-  auto client = node->create_client<AddTwoInt>("add_two_ints");
-
-  while (!client->wait_for_service(1s)) {
-    if (!rclcpp::ok()) {
-      RCLCPP_ERROR(node->get_logger(), "Interrupted while waiting for the service");
-      rclcpp::shutdown();
-      return 1;
-    }
-
-    RCLCPP_INFO(node->get_logger(), "Waiting for service...");
-  }
-
-  auto request = std::make_shared<AddTwoInt::Request>();
-  request->a = std::atoll(argv[1]);
-  request->b = std::atoll(argv[2]);
-
-  auto future = client->async_send_request(request);
-
-  if (rclcpp::spin_until_future_complete(node, future) !=
-    rclcpp::FutureReturnCode::SUCCESS)
-  {
-    RCLCPP_ERROR(node->get_logger(), "Service call failed");
-    rclcpp::shutdown();
-    return 1;
-  }
-
-  RCLCPP_INFO(node->get_logger(), "Result: %ld", future.get()->c);
+  auto node = std::make_shared<AddTwoIntsClient>();
+  const bool success = node->send_request(std::atoll(argv[1]), std::atoll(argv[2]));
 
   rclcpp::shutdown();
-  return 0;
+  return success ? 0 : 1;
 }

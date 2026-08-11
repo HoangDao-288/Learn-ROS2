@@ -1,3 +1,4 @@
+#include <functional>
 #include <memory>
 
 #include "example_msgs/srv/add_two_int.hpp"
@@ -5,21 +6,39 @@
 
 using AddTwoInt = example_msgs::srv::AddTwoInt;
 
-void add_two_ints(
-  const std::shared_ptr<AddTwoInt::Request> request,
-  std::shared_ptr<AddTwoInt::Response> response)
+class AddTwoIntsServer : public rclcpp::Node
 {
-  response->c = request->a + request->b;
-}
+public:
+  AddTwoIntsServer()
+  : Node("add_two_ints_server")
+  {
+    service_ = create_service<AddTwoInt>(
+      "add_two_ints",
+      std::bind(
+        &AddTwoIntsServer::add_two_ints,
+        this,
+        std::placeholders::_1,
+        std::placeholders::_2));
+
+    RCLCPP_INFO(get_logger(), "AddTwoInt service is ready");
+  }
+
+private:
+  void add_two_ints(
+    const std::shared_ptr<AddTwoInt::Request> request,
+    std::shared_ptr<AddTwoInt::Response> response)
+  {
+    response->c = request->a + request->b;
+  }
+
+  rclcpp::Service<AddTwoInt>::SharedPtr service_;
+};
 
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
 
-  auto node = rclcpp::Node::make_shared("add_two_ints_server");
-  auto service = node->create_service<AddTwoInt>("add_two_ints", &add_two_ints);
-
-  RCLCPP_INFO(node->get_logger(), "AddTwoInt service is ready");
+  auto node = std::make_shared<AddTwoIntsServer>();
   rclcpp::spin(node);
 
   rclcpp::shutdown();
