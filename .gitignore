@@ -1,0 +1,43 @@
+## ROS 2 / colcon generated files
+build/
+install/
+log/
+
+## CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CTestTestfile.cmake
+Makefile
+compile_commands.json
+
+## Python generated files
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+## C/C++ build artifacts
+*.o
+*.so
+*.a
+*.dll
+*.dylib
+*.exe
+
+## Editor and IDE files
+.vscode/
+*.swp
+*.swo
+*~
+
+## OS files
+.DS_Store
+Thumbs.db
+
+## Local environment files
+.env
+.env.*
+*.local
