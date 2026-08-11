@@ -1,4 +1,4 @@
-# Learn ROS 2
+# Learn ROS2
 
 ROS 2 learning workspace with small example packages for topics, services, and custom interfaces.
 
